@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
     for ( ; ; ) {
         struct sockaddr_in addr;
         socklen_t addr_len;
+        char client_address[MAXLINE+1];
 
         printf("waiting for a connection on port %d\n",SERVER_PORT);
         fflush(stdout);
@@ -45,7 +46,13 @@ int main(int argc, char** argv) {
         //listening socket, listenfd, creates a new connected socket, and returns a new file descriptor referring to that socket.  The newly created socket is not in the listening state.  The original socket listenfd is unaffected by this call.
         //https://man7.org/linux/man-pages/man2/accept.2.html
         //accept() is a blocking operation. it waits till someone connects.
-        connfd = accept(listenfd, (SA *) NULL, NULL);
+        // addr will be filled in with the address of the client socket. The addrlen argument is a value-result argument: the caller must initialize it to contain the size (in bytes) of the structure
+        // pointed to by addr; on return it will contain the actual size of the peer address.
+        connfd = accept(listenfd, (SA *) &addr, &addr_len);
+
+        //https://man7.org/linux/man-pages/man3/inet_ntop.3.html. Converts the network address structure src in the af address family into a character string.
+        inet_ntop(AF_INET, &addr, client_address, MAXLINE);
+        printf("Client connection: %s\n", client_address);
 
         // zero out the receive buffer before reading anything.
         memset(recvline, 0, MAXLINE);
