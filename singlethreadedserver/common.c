@@ -1,6 +1,6 @@
 #include "common.h"
 
-void err_and_die(const char *fmt, ...) {
+void err_n_die(const char *fmt, ...) {
     int errno_save;
     va_list ap;
     errno_save = errno;
@@ -28,6 +28,7 @@ char* bin2hex(const unsigned char* input, size_t len) {
         return NULL;
     }
 
+    //(2 hexits+space)/chr + NULL
     int resultlength = (len*3)+1;
 
     result = malloc(resultlength);

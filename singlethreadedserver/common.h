@@ -22,7 +22,8 @@
 #define MAXLINE 4096
 #define SA struct sockaddr
 
+// prints out the error to the console.
 void err_n_die(const char* fmt, ...);
 
-// only used for debugging purposes
+// only used for debugging purposes. converts binary to hex data.
 char* bin2hex(const unsigned char* input, size_t len);

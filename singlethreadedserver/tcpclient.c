@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
     char recvline[MAXLINE];
 
     if (argc != 2) {
-        err_and_die("usage: %s <server address>", argv[0]);
+        err_n_die("usage: %s <server address>", argv[0]);
     }
 
     // create a new socket. https://pubs.opengroup.org/onlinepubs/007904975/functions/socket.html
@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     //https://www.ibm.com/docs/en/aix/7.1?topic=protocols-socket-types
     // Upon successful completion, socket() shall return a non-negative integer, the socket file descriptor. Otherwise, a value of -1 shall be returned and errno set to indicate the error.
     if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        err_and_die("Error while creating the socket!");
+        err_n_die("Error while creating the socket!");
     }
 
     //https://pubs.opengroup.org/onlinepubs/007904975/functions/bzero.html.
@@ -34,12 +34,12 @@ int main(int argc, char **argv) {
     //network address structure to dst.  The af argument must be either AF_INET or AF_INET6.  dst is written in network byte order.
     //Basically, it converts the string representation of the IP address into a binary representation.
     if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0) {
-        err_and_die("inet_pton error for %s ", argv[1]);
+        err_n_die("inet_pton error for %s ", argv[1]);
     }
 
     //https://pubs.opengroup.org/onlinepubs/007904975/functions/connect.html
     if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0) {
-        err_and_die("connect failed");
+        err_n_die("connect failed");
     }
 
     //The C Library sprintf() function allows you to create strings with specified formats, similar to printf(), but instead of printing to the standard output, it stores the resulting string in a character array provided by the user.
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     //The write() function shall attempt to write nbyte bytes from the buffer pointed to by buf to the file associated with the open file descriptor, fildes.
     //write data into the socket. it will send these characters over the network to the server.
     if (write(sockfd, sendline, sendbytes) != sendbytes) {
-        err_and_die("write error");
+        err_n_die("write error");
     }
 
     //The read() function shall attempt to read nbyte bytes from the file associated with the open file descriptor, fildes, into the buffer pointed to by buf. The behavior of multiple concurrent reads on the same pipe, FIFO, or terminal device is unspecified.
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
     }
 
     if (n < 0) {
-        err_and_die("read error");
+        err_n_die("read error");
     }
 
     fprintf(stdout, "\nEXITING THE PROGRAM\n");
