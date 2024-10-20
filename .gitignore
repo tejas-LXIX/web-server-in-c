@@ -1,0 +1,4 @@
+.vscode/c_cpp_properties.json
+.vscode/settings.json
+multithreadedserver_with_thread_pool/myqueue.o
+multithreadedserver_with_thread_pool/server
