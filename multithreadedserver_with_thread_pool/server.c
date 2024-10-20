@@ -15,8 +15,16 @@
 #define SERVER_BACKLOG 100
 #define THREAD_POOL_SIZE 20
 
+//thread pool
 pthread_t pool[THREAD_POOL_SIZE];
+
+//mutex for avoiding race conditions
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+//condition variable. a condition variable allows threads to wait till some event occurs. This event is usually a pre-requisite for the thread to do it's work.
+//This avoids busy waiting and burning up CPU cycles doing nothing. The threads are suspended till this event occurs.
+//Each thread waits till another thread (usually the main thread) calls signal().
+pthread_cond_t condition_var = PTHREAD_COND_INITIALIZER;
 
 typedef struct sockaddr_in SA_IN;
 typedef struct sockaddr SA;
@@ -52,19 +60,14 @@ int main(int argc, char** argv) {
 
         //put the connection information somewhere where any thread can find it once it becomes available.
 
-
         int *pclient = malloc(sizeof(int));
         *pclient = client_socket;
 
         pthread_mutex_lock(&mutex);
         enqueue(pclient);
+        //wakes up one of the threads. the woken up thread will handle the task.
+        pthread_cond_signal(&condition_var);
         pthread_mutex_unlock(&mutex);
-        
-    //     //for multithreading
-    //    pthread_create(&t, NULL, handle_connection, pclient);
-
-    //     //for single threaded.
-    //     // handle_connection(pclient);
     }
 
     return 0;
@@ -79,10 +82,18 @@ int check(int exp, const char* msg) {
 }
 
 void* thread_function(void* arg) {
-    //this is BAD. it consumes a lot of cpu cycles because each thread keeps checking whether there is new work or not, even when there are no requests coming in.
     while(true) {
+        int* pclient;
         pthread_mutex_lock(&mutex);
-        int* pclient = dequeue();
+//the thread waits till another thread calls signal(). so, the thread stops just before dequeuing any task.
+//once a task is received, the main thread will call signal(), which will wake up one of the threads which will start executing from the line just after wait. here, the thread will start from dequeue().
+//when the thread is suspended, it also releases the lock. that's why the mutex was passed.
+//when signal is called, the suspended thread first re-acquires the lock before wait() returns i.e the thread only starts executing AFTER re-acquiring the lock.
+//call wait ONLY IF there are no new connections coming in AND there is no existing work in the queue.
+        if ((pclient = dequeue()) == NULL) {
+            pthread_cond_wait(&condition_var, &mutex);
+            pclient = dequeue();
+        }
         pthread_mutex_unlock(&mutex);
 
         if (pclient != NULL) {
